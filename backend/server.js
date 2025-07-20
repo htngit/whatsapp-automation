@@ -124,6 +124,13 @@ async function initBrowser() {
  * @param {string} message - Message content to send
  * @returns {Promise<boolean>} - Success status
  */
+/**
+ * Send WhatsApp message to a specific phone number
+ * Handles both successful sends and invalid numbers (OK button scenario)
+ * @param {string} phone - Phone number to send message to
+ * @param {string} message - Message content to send
+ * @returns {boolean} - Success status
+ */
 async function sendWhatsAppMessage(phone, message) {
   try {
     // Format phone number (remove any non-numeric characters)
@@ -141,20 +148,92 @@ async function sendWhatsAppMessage(phone, message) {
       timeout: 60000 // 60 seconds timeout
     });
 
-    // Wait for the send button to appear
-    await page.waitForSelector('[aria-label="Send"]', { timeout: 30000 });
+    // Wait for either Send button or OK button (for invalid numbers)
+    try {
+      // Try to find Send button first (valid number scenario)
+      await page.waitForSelector('[aria-label="Send"]', { timeout: 15000 });
+      
+      // Click the send button
+      await page.click('[aria-label="Send"]');
+      
+      console.log(`Message sent to ${phone} successfully`);
+      
+      // Wait 1.5 seconds after sending before proceeding to next number
+      await page.waitForTimeout(1500);
+      
+      // Close the temporary send page but keep main session
+      await page.close();
+      
+      return true;
+      
+    } catch (sendButtonError) {
+      // If Send button not found, check for OK button (invalid number scenario)
+      console.log(`Send button not found for ${phone}, checking for invalid number dialog...`);
+      
+      try {
+        // Look for OK button in invalid number dialog
+        const okButtonSelectors = [
+          'button[data-testid="ok-button"]',
+          'button:contains("OK")',
+          '[role="button"]:contains("OK")',
+          'div[role="button"]:contains("OK")',
+          'button[aria-label="OK"]'
+        ];
+        
+        let okButtonFound = false;
+        
+        for (const selector of okButtonSelectors) {
+          try {
+            await page.waitForSelector(selector, { timeout: 3000 });
+            await page.click(selector);
+            console.log(`Invalid number ${phone} - OK button clicked`);
+            okButtonFound = true;
+            break;
+          } catch (e) {
+            // Continue to next selector
+          }
+        }
+        
+        // If no specific OK button found, try generic approach
+        if (!okButtonFound) {
+          // Look for any button containing "OK" text
+          const okButton = await page.evaluateHandle(() => {
+            const buttons = Array.from(document.querySelectorAll('button, div[role="button"]'));
+            return buttons.find(button => 
+              button.textContent && 
+              button.textContent.trim().toUpperCase().includes('OK')
+            );
+          });
+          
+          if (okButton && okButton.asElement()) {
+            await okButton.asElement().click();
+            console.log(`Invalid number ${phone} - Generic OK button clicked`);
+            okButtonFound = true;
+          }
+        }
+        
+        if (okButtonFound) {
+          // Wait 1.5 seconds after clicking OK before proceeding to next number
+          await page.waitForTimeout(1500);
+          
+          // Close the temporary send page but keep main session
+          await page.close();
+          
+          console.log(`Invalid number ${phone} handled successfully`);
+          return false; // Return false as message wasn't actually sent
+        } else {
+          console.log(`No OK button found for ${phone}, closing page`);
+          await page.close();
+          return false;
+        }
+        
+      } catch (okButtonError) {
+        console.error(`Error handling invalid number ${phone}:`, okButtonError);
+        await page.close();
+        return false;
+      }
+    }
     
-    // Click the send button
-    await page.click('[aria-label="Send"]');
-    
-    // Wait a bit to ensure message is sent
-    await page.waitForTimeout(2000);
-    
-    // Close the temporary send page but keep main session
-    await page.close();
-    
-    console.log(`Message sent to ${phone} successfully`);
-    return true;
   } catch (error) {
     console.error(`Error sending message to ${phone}:`, error);
     return false;
