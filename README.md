@@ -1,5 +1,78 @@
 # WhatsApp Automation
 
+A powerful WhatsApp automation tool built with Node.js, Express, Puppeteer, and React.
+
+## 🚀 Quick Start
+
+### Windows
+1. **Install Dependencies:**
+   ```bash
+   install.bat
+   ```
+
+2. **Start Development Servers:**
+   ```bash
+   start-dev.bat
+   ```
+
+### Mac/Linux
+1. **Make scripts executable:**
+   ```bash
+   chmod +x install.sh start-dev.sh
+   ```
+
+2. **Install Dependencies:**
+   ```bash
+   ./install.sh
+   ```
+
+3. **Start Development Servers:**
+   ```bash
+   ./start-dev.sh
+   ```
+
+## 📋 Prerequisites
+
+- Node.js (v16 or higher)
+- npm (comes with Node.js)
+- Chrome/Chromium browser (for Puppeteer)
+
+## 🌐 Access Points
+
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:3001
+
+## 📁 Project Structure
+
+```
+whatsapp-automation/
+├── backend/          # Express.js API server
+├── frontend/         # React.js web interface
+├── install.bat       # Windows installation script
+├── install.sh        # Mac/Linux installation script
+├── start-dev.bat     # Windows development server starter
+├── start-dev.sh      # Mac/Linux development server starter
+└── README.md         # This file
+```
+
+## 🛠️ Manual Installation
+
+If you prefer to install manually:
+
+### Backend
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 Aplikasi otomasi WhatsApp untuk mengirim pesan massal menggunakan CSV file.
 
 ## Fitur
